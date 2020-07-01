@@ -1,9 +1,11 @@
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class TriesDS {
     private class Node {
         private char value;
-        private final int ALPHABET_SIZE = 26;
+
         private HashMap<Character, Node> children = new HashMap<>();
         private boolean isEndOfWord;
 
@@ -28,12 +30,27 @@ public class TriesDS {
             return children.get(ch);
         }
 
+        public Node[] getChildren() {
+            return children.values().toArray(new Node[0]);
+        }
+
+        public boolean hasChildren() {
+            return !children.isEmpty();
+        }
+
+        public void removeChild(char ch) {
+            children.remove(ch);
+        }
+
     }
 
     private Node root;
 
+    private int wordCount;
+
     public TriesDS() {
         this.root = new Node(' ');
+        this.wordCount = 0;
     }
 
     public void insert(String word) {
@@ -60,4 +77,102 @@ public class TriesDS {
 
         return current.isEndOfWord;
     }
+
+    public boolean containsRecursive(String word) {
+        if (word == null)
+            return false;
+        return containsRecursive(root, word, 0);
+    }
+
+    private boolean containsRecursive(Node current, String word, int index) {
+
+        if (index == word.length())
+            return current.isEndOfWord;
+        var ch = word.charAt(index);
+        var child = current.getChild(ch);
+        if (child == null)
+            return false;
+
+        return containsRecursive(child, word, index + 1);
+
+    }
+
+    public int countWords() {
+        return countWords(root);
+    }
+
+    private int countWords(Node root) {
+        if (root.isEndOfWord)
+            wordCount++;
+        for (var child : root.getChildren())
+            countWords(child);
+        return wordCount;
+    }
+
+    public void traverse() {
+        traverse(root);
+    }
+
+    private void traverse(Node root) {
+        // Post-Order: visit the root first
+
+        for (var child : root.getChildren())
+            traverse(child);
+
+        System.out.println(root.value);
+        System.out.println("");
+    }
+
+    public void remove(String word) {
+        if (word == null)
+            return;
+        remove(root, word, 0);
+    }
+
+    private void remove(Node root, String word, int index) {
+        if (index == word.length()) {
+            root.isEndOfWord = false;
+            return;
+        }
+
+        var ch = word.charAt(index);
+        var child = root.getChild(ch);
+        if (child == null)
+            return;
+        remove(child, word, index + 1);
+
+        if (!child.hasChildren() && !child.isEndOfWord)
+            root.removeChild(ch);
+    }
+
+    public List<String> findWords(String prefix) {
+        List<String> words = new ArrayList<>();
+        var lastNode = findeLastNodeOf(prefix);
+        findWords(lastNode, prefix, words);
+        return words;
+    }
+
+    private void findWords(Node root, String prefix, List<String> words) {
+        if (root == null)
+            return;
+        if (root.isEndOfWord)
+            words.add(prefix);
+        for (var child : root.getChildren())
+            findWords(child, prefix + child.value, words);
+    }
+
+    private Node findeLastNodeOf(String prefix) {
+        if (prefix == null)
+            return null;
+
+        var current = root;
+        for (var ch : prefix.toCharArray()) {
+            var child = current.getChild(ch);
+            if (child == null)
+                return null;
+            current = child;
+        }
+        return current;
+    }
+
 }
